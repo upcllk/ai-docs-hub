@@ -46,3 +46,21 @@
 - **根本原因**：`~~text~~` 是 Markdown 删除线语法，`~~` 成对出现即可能触发
 - **解决方案**：改用 `------------------` 替代
 - **预防措施**：代码块内的装饰性字符使用 `-`、`=`、`_` 等安全符号
+
+### [PITFALL-004] async init() 中断导致事件监听未绑定
+
+- **发现时间**：2026-06-28
+- **涉及模块**：viewer.ts / initSelectionCapture
+- **问题描述**：选中文字无任何反应，控制台无 debug 日志
+- **根本原因**：`init()` 中 `refreshAnnotations()` 抛错，导致后续的 `initSelectionCapture()` 从未执行，mouseup 事件从未绑定
+- **解决方案**：将 `initSelectionCapture()` 提到 `refreshAnnotations()` 之前；或对 `refreshAnnotations()` 加 try-catch
+- **预防措施**：事件绑定等"基础功能"不应依赖"数据加载"的成功，两者应并行或基础功能优先
+
+### [PITFALL-005] Vite SPA fallback 对不存在文件返回 200 + HTML
+
+- **发现时间**：2026-06-28
+- **涉及模块**：LocalFileProvider.listAnnotations
+- **问题描述**：`SyntaxError: Unexpected token '<'`，JSON 解析报错
+- **根本原因**：Vite dev server 默认开启 SPA fallback，访问不存在的路径返回 `index.html`（status 200），而非 404；代码仅检查 status 404，未能拦截这种情况
+- **解决方案**：额外检查响应的 `Content-Type`，非 JSON 类型时直接返回 `[]`
+- **预防措施**：在 Vite 开发环境中 fetch 静态 JSON 文件时，不能仅靠 status code 判断，需结合 Content-Type 或在 `vite.config.ts` 中禁用 `historyApiFallback`
