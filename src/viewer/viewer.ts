@@ -171,20 +171,16 @@ function onMouseUp(e: Event) {
 
   setTimeout(() => {
     const sel = window.getSelection()
-    console.log('[debug] mouseup, sel:', sel?.toString(), 'isCollapsed:', sel?.isCollapsed)
     if (!sel || sel.isCollapsed || sel.toString().trim() === '') {
       hideTooltip()
       return
     }
     const range = sel.getRangeAt(0)
-    const inDoc = docContainer.contains(range.commonAncestorContainer)
-    console.log('[debug] inDocContainer:', inDoc, range.commonAncestorContainer)
-    if (!inDoc) {
+    if (!docContainer.contains(range.commonAncestorContainer)) {
       hideTooltip()
       return
     }
     const rect = range.getBoundingClientRect()
-    console.log('[debug] rect:', rect, 'showing tooltip at top:', rect.top - 40)
     showTooltip(rect)
     pendingAnchor = buildAnchor(sel, range)
   }, 10)
@@ -204,8 +200,13 @@ function buildAnchor(sel: Selection, _range: Range): Anchor {
 
 function showTooltip(rect: DOMRect) {
   tooltip.style.display = 'block'
-  tooltip.style.left = `${rect.left + rect.width / 2 - tooltip.offsetWidth / 2}px`
-  tooltip.style.top  = `${rect.top - 40}px`
+  const tw = tooltip.offsetWidth
+  const left = Math.max(8, Math.min(rect.left + rect.width / 2 - tw / 2, window.innerWidth - tw - 8))
+  tooltip.style.left = `${left}px`
+  // 出现在选区下方（更直觉），如果接近视口底部则出现在上方
+  const belowTop = rect.bottom + 8
+  const aboveTop = rect.top - 40
+  tooltip.style.top = belowTop + tooltip.offsetHeight < window.innerHeight ? `${belowTop}px` : `${aboveTop}px`
 }
 
 function hideTooltip() {
