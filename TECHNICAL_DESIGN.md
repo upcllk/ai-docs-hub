@@ -147,48 +147,59 @@ interface AnnotationProvider {
 
 ---
 
-### M3 · `src/providers/GitHubIssueProvider.ts`
+### M3 · `src/providers/LocalFileProvider.ts`（Demo 主力）
 
-`AnnotationProvider` 的 Demo 实现，使用 GitHub Issues REST API。
+`AnnotationProvider` 的 Demo 实现，**标注数据存为仓库内的 JSON 文件，通过 git 命令提交**，零鉴权、零 API。
 
-**Issue 数据格式约定：**
+**文件存储路径约定：**
 
-- **Title**：`[annotation] {docId}@{version}: {selectedText前20字}`
-- **Label**：`annotation`、`{version}`（便于按版本筛选）
-- **Body**（JSON block，方便机器读取）：
+```
+annotations/
+  {docId}/
+    {version}.json    ← 该文档该版本的所有标注
+```
 
-```markdown
-<!-- annotation-data
-{"anchor": {...}, "author": "xxx"}
--->
+例：`annotations/sample-prd/v1.0.json`
 
-**选中文字**
-> {selectedText}
+**JSON 文件格式：**
 
-**评论**
-{comment}
+```json
+[
+  {
+    "id": "a1b2c3",
+    "anchor": {
+      "docId": "sample-prd",
+      "version": "v1.0",
+      "selectedText": "需要确认的文字",
+      "contextBefore": "前50个字符...",
+      "contextAfter": "后50个字符..."
+    },
+    "comment": "这里需要和产品确认",
+    "author": "张三",
+    "createdAt": "2026-06-28T10:00:00Z",
+    "replies": []
+  }
+]
 ```
 
 **关键方法说明：**
 
-| 方法 | HTTP 操作 | 鉴权 |
-|------|-----------|------|
-| `createAnnotation` | `POST /repos/{owner}/{repo}/issues` | 需要 PAT |
-| `listAnnotations` | `GET /repos/{owner}/{repo}/issues?labels=annotation,{version}` | 公开仓库免认证 |
-| `replyToAnnotation` | `POST /repos/{owner}/{repo}/issues/{id}/comments` | 需要 PAT |
-| `deleteAnnotation` | `PATCH /repos/{owner}/{repo}/issues/{id}` body: `{state: "closed"}` | 需要 PAT |
+| 方法 | 操作 | 说明 |
+|------|------|------|
+| `createAnnotation` | 读取 JSON → 追加 → 写回文件 | ID 用 `Date.now()` 生成短串 |
+| `listAnnotations` | `fetch annotations/{docId}/{version}.json` | GitHub Pages 托管后直接可读 |
+| `replyToAnnotation` | 读取 JSON → 找到对应条目 → 追加 reply → 写回 | 同上 |
+| `deleteAnnotation` | 读取 JSON → 过滤掉该 ID → 写回 | 硬删除 |
 
-**Token 传入方式**：构造函数注入，不硬编码：
+**写入后的工作流**（用户侧操作，前端提示执行）：
 
-```typescript
-class GitHubIssueProvider implements AnnotationProvider {
-  constructor(private config: {
-    owner: string
-    repo: string
-    token?: string  // 读取时可省略；写入时必须传入
-  }) {}
-}
+```bash
+git add annotations/
+git commit -m "添加标注：{selectedText 前 20 字}"
+git push origin main
 ```
+
+> **后期扩展**：`GitHubIssueProvider` 作为可替换实现，通过修改 `config.ts` 中的注入配置切换，无需改动业务代码。
 
 ---
 
@@ -266,18 +277,19 @@ class GitHubIssueProvider implements AnnotationProvider {
 运行时配置，**唯一需要修改的地方**即可切换 Provider。
 
 ```typescript
-import { GitHubIssueProvider } from './providers/GitHubIssueProvider'
+// Demo 阶段：使用本地 JSON 文件 + git 命令行提交
+import { LocalFileProvider } from './providers/LocalFileProvider'
 
-export const provider = new GitHubIssueProvider({
-  owner: import.meta.env.VITE_GITHUB_OWNER,
-  repo:  import.meta.env.VITE_GITHUB_REPO,
-  token: import.meta.env.VITE_GITHUB_TOKEN,  // 可选，只读时不需要
+export const provider = new LocalFileProvider({
+  baseUrl: import.meta.env.BASE_URL,  // GitHub Pages 的仓库根路径
 })
 
 export const currentVersion = import.meta.env.VITE_DOC_VERSION ?? 'latest'
-```
 
-切换到 GitLab 时，只需将第一行改为 `import { GitLabIssueProvider }`，其余不变。
+// 后期切换 GitHub Issues：只需替换上面两行为：
+// import { GitHubIssueProvider } from './providers/GitHubIssueProvider'
+// export const provider = new GitHubIssueProvider({ owner, repo, token })
+```
 
 ---
 
