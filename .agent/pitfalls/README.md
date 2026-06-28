@@ -73,3 +73,12 @@
 - **根本原因**：API 按 `annotation,v1.0` 标签过滤，但仓库中这两个标签不存在；预填 URL 里设置的 labels 在标签不存在时会被 GitHub 静默忽略，Issue 没有打上任何标签，导致 API 返回空列表
 - **解决方案**：改为按 Issue 标题前缀 `[annotation] {docId}@{version}` 筛选，无需标签
 - **预防措施**：GitHub 预填 URL 的 labels 参数不可靠；涉及标签过滤时需先通过 API 确保标签存在
+
+### [PITFALL-007] 多行文字选中时 TreeWalker 无法匹配跨节点的 selectedText
+
+- **发现时间**：2026-06-28
+- **涉及模块**：ui/Highlighter（viewer.ts 中的 highlightAnchor）
+- **问题描述**：多行选中的标注刷新后无高亮显示，三个联动效果全部失效
+- **根本原因**：`TreeWalker` 每次只拿一个文本节点；多行选中时 `selectedText` 跨越多个节点（如多个 `<li>`），任何单个节点都不包含完整的 selectedText，indexOf 返回 -1
+- **解决方案**：取 selectedText 的第一个非空行（firstLine）用于定位，结合 contextBefore 辅助精确匹配
+- **预防措施**：文本锚点定位不能假设 selectedText 在单个文本节点内；对于跨节点选中，需拆分为首行/首句定位，或改用 DOM 路径 + 偏移量方案
