@@ -26,8 +26,10 @@ ai-docs-hub/
 ├── .agent/
 │   ├── pitfalls/          ← 实现中遇到的坑和问题
 │   │   └── README.md      ← 坑记录索引
-│   └── progress/          ← 实现进度追踪
-│       └── README.md      ← 进度追踪索引
+│   ├── progress/          ← 实现进度追踪
+│   │   └── README.md      ← 进度追踪索引
+│   └── todos/             ← 已知缺陷与后续规划
+│       └── README.md      ← 待办清单
 ├── .github/
 │   └── workflows/         ← GitHub Actions 配置（待创建）
 ├── docs/                  ← PRD / 技术文档 HTML 文件（待创建）
@@ -42,12 +44,14 @@ ai-docs-hub/
 1. 阅读 `plan.md` 了解整体架构，阅读 `TECHNICAL_DESIGN.md` 了解模块划分与接口约定
 2. 阅读 `.agent/progress/README.md` 了解当前实现进度
 3. 阅读 `.agent/pitfalls/README.md` 避免踩已知的坑
+4. 阅读 `.agent/todos/README.md` 了解当前已知缺陷与后续规划
 
 ### 每次任务完成后
 必须执行以下检查，**有变化则更新，无变化可跳过**：
 
 - [ ] `.agent/progress/README.md` — 更新已完成的模块状态
 - [ ] `.agent/pitfalls/README.md` — 记录本次遇到的新问题
+- [ ] `.agent/todos/README.md` — 新增待办项或更新已完成的待办状态
 - [ ] `AGENTS.md` — 如目录结构或规范发生变化，同步更新本文件
 
 ### 提交规范
