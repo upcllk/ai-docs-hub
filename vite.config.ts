@@ -3,7 +3,8 @@ import { resolve } from 'path'
 
 export default defineConfig({
   root: 'src/viewer',
-  publicDir: resolve(__dirname, 'docs'),  // 将 docs/ 作为静态资源目录
+  // 项目根目录作为静态目录：/docs/ 和 /annotations/ 均可访问
+  publicDir: resolve(__dirname),
   build: {
     outDir: resolve(__dirname, 'dist'),
     emptyOutDir: true,
