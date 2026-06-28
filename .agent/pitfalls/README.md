@@ -64,3 +64,12 @@
 - **根本原因**：Vite dev server 默认开启 SPA fallback，访问不存在的路径返回 `index.html`（status 200），而非 404；代码仅检查 status 404，未能拦截这种情况
 - **解决方案**：额外检查响应的 `Content-Type`，非 JSON 类型时直接返回 `[]`
 - **预防措施**：在 Vite 开发环境中 fetch 静态 JSON 文件时，不能仅靠 status code 判断，需结合 Content-Type 或在 `vite.config.ts` 中禁用 `historyApiFallback`
+
+### [PITFALL-006] GitHub Issues API 标签过滤依赖标签预先存在
+
+- **发现时间**：2026-06-28
+- **涉及模块**：GitHubIssueUrlProvider.listAnnotations
+- **问题描述**：提交 Issue 后刷新页面，标注不显示
+- **根本原因**：API 按 `annotation,v1.0` 标签过滤，但仓库中这两个标签不存在；预填 URL 里设置的 labels 在标签不存在时会被 GitHub 静默忽略，Issue 没有打上任何标签，导致 API 返回空列表
+- **解决方案**：改为按 Issue 标题前缀 `[annotation] {docId}@{version}` 筛选，无需标签
+- **预防措施**：GitHub 预填 URL 的 labels 参数不可靠；涉及标签过滤时需先通过 API 确保标签存在
