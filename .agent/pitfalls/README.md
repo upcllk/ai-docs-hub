@@ -34,6 +34,13 @@
 ### [PITFALL-002] Markdown 中 `~~` 符号被解析为删除线
 
 - **发现时间**：2026-06-28
+- **涉及模块**：ui/SelectionCapture（viewer.ts 中的 showTooltip / openDialog）
+- **问题描述**：浮动按钮和评论弹窗在页面未滚动时位置正常，滚动后出现在视口之外看不到
+- **根本原因**：`getBoundingClientRect()` 返回的是相对于视口的坐标；`position: fixed` 元素的 `top/left` 也是相对于视口的，两者不需要再加 `window.scrollY`
+- **解决方案**：去掉 `+ window.scrollY`，直接使用 `rect.top` 和 `rect.bottom`
+- **预防措施**：使用 `position: fixed` 时坐标直接用 `getBoundingClientRect()`；使用 `position: absolute` 时才需要加 `scrollY`
+
+- **发现时间**：2026-06-28
 - **涉及模块**：plan.md / ASCII 示意图
 - **问题描述**：在代码块内使用 `~~~~~~~~~~~~~~~~~~` 作为下划线装饰，被部分渲染器解析为空删除线
 - **根本原因**：`~~text~~` 是 Markdown 删除线语法，`~~` 成对出现即可能触发
