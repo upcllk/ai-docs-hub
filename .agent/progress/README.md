@@ -27,8 +27,9 @@
 | M5 · ui/Highlighter.ts | ⬜ 待开始 | — | 在原文渲染高亮标记 |
 | M6 · ui/CommentDialog.ts | ⬜ 待开始 | — | 评论输入弹窗 |
 | M7 · ui/AnnotationPanel.ts | ⬜ 待开始 | — | 侧边评论面板，双向联动高亮 |
-| M8 · src/config.ts | ✅ 已完成 | 初始 Session | 当前注入 GitHubIssueUrlProvider，LocalFileProvider 保留为备用注释 |
+| M8 · src/config.ts | ✅ 已完成 | 初始 Session | 支持 URL 路径/参数/环境变量三级版本读取；导出 githubOwner/githubRepo |
 | M9 · viewer/viewer.ts + index.html | ✅ 已完成 | 初始 Session | 入口，含文字选中、高亮渲染、评论面板、弹窗 |
+| 版本检测与发布提示横幅 | ✅ 已完成 | 初始 Session | checkLatestVersion() 调用 GitHub Tags API；过时时显示琥珀色横幅 |
 | M10 · .github/workflows/deploy.yml | ⬜ 待开始 | — | Tag 推送 → 多版本 GitHub Pages 自动部署 |
 | 版本隔离验证 | ⬜ 待开始 | — | v1.0 和 v1.1 标注互不影响 |
 
@@ -55,4 +56,5 @@
 | 2026-06-28 | 完成详细技术设计文档（TECHNICAL_DESIGN.md）：技术栈、10个模块划分、调用关系、关键设计决策 |
 | 2026-06-28 | 完成 M1~M3（types、AnnotationProvider 接口、LocalFileProvider）；新增示例 PRD、.env.example、项目基础配置 |
 | 2026-06-28 | 实现 M8（config.ts）和 M9（viewer）：文字选中、高亮渲染、评论面板、弹窗一体化；更新 vite.config.ts 和 tsconfig.json |
+| 2026-06-28 | 版本检测：checkLatestVersion() + 横幅提示；config.ts 支持 URL 路径/参数/env 三级版本读取 |
 ---

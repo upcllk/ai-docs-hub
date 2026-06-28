@@ -245,6 +245,130 @@
       background: #fde68a;
     }
 
+    /* ── 版本过时提醒横幅 ── */
+    #version-banner {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: #fffbeb;
+      border-bottom: 1px solid #fcd34d;
+      color: #92400e;
+      font-size: 13px;
+      padding: 8px 24px;
+      flex-shrink: 0;
+    }
+    #version-banner .banner-icon { font-size: 15px; }
+    #version-banner-link {
+      color: #b45309;
+      font-weight: 600;
+      text-decoration: none;
+      border: 1px solid #fcd34d;
+      border-radius: 5px;
+      padding: 2px 10px;
+      background: #fef3c7;
+      transition: background .15s;
+    }
+    #version-banner-link:hover { background: #fde68a; }
+
+    /* ── 发布弹窗 ── */
+    #publish-dialog {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 20000;
+      background: rgba(0,0,0,.45);
+      align-items: center;
+      justify-content: center;
+    }
+    #publish-dialog.open { display: flex; }
+    .publish-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 24px;
+      width: 480px;
+      max-width: 95vw;
+      box-shadow: 0 16px 48px rgba(0,0,0,.18);
+    }
+    .publish-card h2 { font-size: 16px; font-weight: 700; margin-bottom: 6px; color: #1e1e3f; }
+    .publish-card p  { font-size: 13px; color: #6b7280; margin-bottom: 16px; }
+    .version-input-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .version-input-row label { font-size: 13px; color: #374151; flex-shrink: 0; }
+    #publish-version-input {
+      flex: 1;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 7px 10px;
+      font-size: 14px;
+      font-family: 'SF Mono', monospace;
+      outline: none;
+    }
+    #publish-version-input:focus { border-color: #4f46e5; }
+    .publish-cmds {
+      background: #1e1e3f;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .publish-cmds.visible { display: flex; }
+    .cmd-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .cmd-line code {
+      flex: 1;
+      color: #a5f3fc;
+      font-size: 13px;
+      font-family: 'SF Mono', 'Menlo', monospace;
+      word-break: break-all;
+    }
+    .cmd-copy {
+      background: none;
+      border: 1px solid #4f46e5;
+      color: #a5b4fc;
+      font-size: 11px;
+      border-radius: 4px;
+      padding: 2px 7px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background .15s;
+    }
+    .cmd-copy:hover { background: #4f46e5; color: #fff; }
+    .cmd-copy.copied { background: #10b981; border-color: #10b981; color: #fff; }
+    .publish-hint {
+      font-size: 12px;
+      color: #9ca3af;
+      display: none;
+      margin-bottom: 12px;
+    }
+    .publish-hint.visible { display: block; }
+    .publish-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    #topbar-publish-btn {
+      background: #4f46e5;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 5px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    #topbar-publish-btn:hover { background: #4338ca; }
+
     /* ── 加载状态 ── */
     #doc-loading {
       display: flex;
@@ -262,6 +386,14 @@
     <span class="logo">📄 AI Docs Hub</span>
     <span class="doc-info" id="doc-title">加载中...</span>
     <span id="version-badge">—</span>
+    <button id="topbar-publish-btn">🚀 发布版本</button>
+  </div>
+
+  <!-- 版本过时提醒横幅（默认隐藏，检测到新版本后显示） -->
+  <div id="version-banner">
+    <span class="banner-icon">⚠️</span>
+    <span id="version-banner-msg"></span>
+    <a id="version-banner-link" href="#" target="_blank">查看最新</a>
   </div>
 
   <div id="main">
@@ -284,6 +416,27 @@
 
   <!-- 选中文字后的浮动按钮 -->
   <div id="selection-tooltip">💬 添加评论</div>
+
+  <!-- 发布版本弹窗 -->
+  <div id="publish-dialog">
+    <div class="publish-card">
+      <h2>🚀 发布 PRD 新版本</h2>
+      <p>发布后当前文档将被打上 Git Tag，其他人访问旧版本时会看到版本过时提示。</p>
+      <div class="version-input-row">
+        <label>版本号</label>
+        <input type="text" id="publish-version-input" placeholder="例如 v1.1" />
+        <button class="btn btn-submit" id="publish-generate-btn">生成命令</button>
+      </div>
+      <div class="publish-cmds" id="publish-cmds"></div>
+      <p class="publish-hint" id="publish-hint">
+        在终端执行以上命令后，刷新页面即可看到新版本标记。<br>
+        若其他人访问旧版本，系统会自动提示他们查看新版本。
+      </p>
+      <div class="publish-actions">
+        <button class="btn btn-cancel" id="publish-close-btn">关闭</button>
+      </div>
+    </div>
+  </div>
 
   <!-- 评论输入弹窗 -->
   <div id="comment-dialog">

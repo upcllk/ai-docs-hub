@@ -1,4 +1,4 @@
-import { provider, currentVersion } from '../config'
+import { provider, currentVersion, githubOwner, githubRepo } from '../config'
 import { REDIRECT_PREFIX } from '../providers/GitHubIssueUrlProvider'
 import type { Anchor, Annotation } from '../core/types'
 
@@ -31,12 +31,63 @@ async function init() {
   // 1. 加载 PRD HTML
   await loadDoc()
 
-  // 3. 先初始化文字选中监听（不依赖标注数据，不阻塞）
+  // 2. 初始化文字选中监听（不依赖标注数据，不阻塞）
   initSelectionCapture()
 
-  // 2. 加载已有标注并渲染（失败时降级为空，不影响选中功能）
-  await refreshAnnotations()
+  // 3. 并行：加载标注 + 检测最新版本
+  await Promise.all([
+    refreshAnnotations(),
+    checkLatestVersion(),
+  ])
 }
+
+// ── 版本检测 ──────────────────────────────────────────────────────────────────
+async function checkLatestVersion() {
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${githubOwner}/${githubRepo}/tags?per_page=10`,
+      { headers: { Accept: 'application/vnd.github+json' } }
+    )
+    if (!res.ok) return
+
+    const tags = await res.json() as Array<{ name: string }>
+    // 只考虑 vX.Y 格式的语义版本 Tag
+    const versionTags = tags.filter(t => /^v\d+(\.\d+)*$/.test(t.name))
+    if (!versionTags.length) return
+
+    const latestVersion = versionTags[0].name
+    if (latestVersion === currentVersion) return
+
+    showVersionOutdatedBanner(latestVersion)
+  } catch {
+    // 版本检测失败不影响主功能，静默忽略
+  }
+}
+
+function showVersionOutdatedBanner(latestVersion: string) {
+  const banner = document.getElementById('version-banner')!
+  const msg    = document.getElementById('version-banner-msg')!
+  const link   = document.getElementById('version-banner-link') as HTMLAnchorElement
+
+  msg.textContent = `当前浏览的是 ${currentVersion}，最新版本为 ${latestVersion}`
+  link.textContent = `查看 ${latestVersion}`
+  link.href = buildVersionUrl(latestVersion)
+  banner.style.display = 'flex'
+}
+
+/** 根据当前 URL 结构推断最新版本的访问地址 */
+function buildVersionUrl(version: string): string {
+  // GitHub Pages 路径模式：/repo/v1.0/ → /repo/v1.1/
+  const pathMatch = location.pathname.match(/^(.*?)\/(v\d+\.\d+)\/?(.*)$/)
+  if (pathMatch) {
+    return `${pathMatch[1]}/${version}/${pathMatch[3]}`
+  }
+  // 本地开发：query 参数模式
+  const params = new URLSearchParams(location.search)
+  params.set('version', version)
+  return `${location.pathname}?${params}`
+}
+
 
 // ── 加载文档 ──────────────────────────────────────────────────────────────────
 async function loadDoc() {
@@ -291,7 +342,7 @@ async function submitComment() {
 
 // ── 工具函数 ──────────────────────────────────────────────────────────────────
 function escapeHtml(str: string): string {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
 function formatDate(iso: string): string {
@@ -311,6 +362,79 @@ function showNotice(msg: string, durationMs = 6000) {
   document.body.appendChild(el)
   setTimeout(() => el.remove(), durationMs)
 }
+
+// ── 发布版本弹窗 ──────────────────────────────────────────────────────────────
+const publishDialog      = document.getElementById('publish-dialog')!
+const publishVersionInput = document.getElementById('publish-version-input') as HTMLInputElement
+const publishGenerateBtn = document.getElementById('publish-generate-btn')!
+const publishCmds        = document.getElementById('publish-cmds')!
+const publishHint        = document.getElementById('publish-hint')!
+const publishCloseBtn    = document.getElementById('publish-close-btn')!
+
+document.getElementById('topbar-publish-btn')!.addEventListener('click', () => {
+  publishVersionInput.value = ''
+  publishCmds.innerHTML = ''
+  publishCmds.classList.remove('visible')
+  publishHint.classList.remove('visible')
+  publishDialog.classList.add('open')
+  publishVersionInput.focus()
+})
+
+publishCloseBtn.addEventListener('click', () => publishDialog.classList.remove('open'))
+publishDialog.addEventListener('click', (e) => {
+  if (e.target === publishDialog) publishDialog.classList.remove('open')
+})
+
+publishVersionInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') publishGenerateBtn.click()
+})
+
+publishGenerateBtn.addEventListener('click', () => {
+  const version = publishVersionInput.value.trim()
+  if (!version) { publishVersionInput.focus(); return }
+  if (!/^v\d+(\.\d+)*$/.test(version)) {
+    showNotice('版本号格式应为 vX.Y（例如 v1.1）', 2500)
+    publishVersionInput.select()
+    return
+  }
+
+  const cmds = [
+    `git add docs/`,
+    `git commit -m "发布 PRD ${version}"`,
+    `git tag ${version}`,
+    `git push origin HEAD --tags`,
+  ]
+
+  publishCmds.innerHTML = `
+    <div class="cmd-line" style="justify-content:flex-end;margin-bottom:4px">
+      <button class="cmd-copy" id="copy-all-cmds" data-all="${escapeHtml(cmds.join('\n'))}">📋 一键复制全部</button>
+    </div>
+    ${cmds.map(cmd => `
+      <div class="cmd-line">
+        <code>${escapeHtml(cmd)}</code>
+        <button class="cmd-copy" data-cmd="${escapeHtml(cmd)}">复制</button>
+      </div>
+    `).join('')}
+  `
+
+  publishCmds.classList.add('visible')
+  publishHint.classList.add('visible')
+
+  // 一键复制各命令（含全部）
+  publishCmds.querySelectorAll<HTMLButtonElement>('.cmd-copy').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const text = btn.dataset.all ?? btn.dataset.cmd ?? ''
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = '已复制 ✓'
+        btn.classList.add('copied')
+        setTimeout(() => {
+          btn.textContent = btn.dataset.all ? '📋 一键复制全部' : '复制'
+          btn.classList.remove('copied')
+        }, 1500)
+      })
+    })
+  })
+})
 
 // ── 启动 ─────────────────────────────────────────────────────────────────────
 init()
