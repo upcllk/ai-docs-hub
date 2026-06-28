@@ -204,7 +204,7 @@ function buildAnchor(sel: Selection, _range: Range): Anchor {
 function showTooltip(rect: DOMRect) {
   tooltip.style.display = 'block'
   tooltip.style.left = `${rect.left + rect.width / 2 - tooltip.offsetWidth / 2}px`
-  tooltip.style.top  = `${rect.top - 40 + window.scrollY}px`
+  tooltip.style.top  = `${rect.top - 40}px`
 }
 
 function hideTooltip() {
@@ -224,7 +224,7 @@ function openDialog() {
   if (sel && !sel.isCollapsed) {
     const rect = sel.getRangeAt(0).getBoundingClientRect()
     dialog.style.left = `${Math.min(rect.left, window.innerWidth - 320)}px`
-    dialog.style.top  = `${rect.bottom + 8 + window.scrollY}px`
+    dialog.style.top  = `${rect.bottom + 8}px`
   }
   dialog.style.display = 'block'
   commentInput.focus()
