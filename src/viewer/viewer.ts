@@ -83,31 +83,46 @@ function renderHighlights() {
 
 function highlightAnchor(ann: Annotation) {
   const { selectedText, contextBefore, contextAfter } = ann.anchor
-  const searchStr = contextBefore + selectedText + contextAfter
 
   const walker = document.createTreeWalker(docContainer, NodeFilter.SHOW_TEXT)
   let node: Text | null
 
   while ((node = walker.nextNode() as Text | null)) {
-    const idx = node.nodeValue?.indexOf(searchStr) ?? -1
-    if (idx === -1) continue
+    const text = node.nodeValue ?? ''
 
-    const startOffset = idx + contextBefore.length
+    // 优先：用上下文三元组精确定位（同一文本节点内）
+    const fullStr = contextBefore + selectedText + contextAfter
+    let startOffset = -1
+
+    const fullIdx = text.indexOf(fullStr)
+    if (fullIdx !== -1) {
+      startOffset = fullIdx + contextBefore.length
+    } else {
+      // 降级：仅用 selectedText 匹配（跨节点时 context 找不到）
+      startOffset = text.indexOf(selectedText)
+    }
+
+    if (startOffset === -1) continue
+
     const endOffset = startOffset + selectedText.length
+    if (endOffset > text.length) continue
 
-    // 用 Range API 精确包裹选中文字
-    const range = document.createRange()
-    range.setStart(node, startOffset)
-    range.setEnd(node, endOffset)
+    try {
+      const range = document.createRange()
+      range.setStart(node, startOffset)
+      range.setEnd(node, endOffset)
 
-    const mark = document.createElement('mark')
-    mark.className = 'annotation-highlight'
-    mark.dataset.annotationId = ann.id
-    mark.title = `${ann.author}：${ann.comment}`
-    range.surroundContents(mark)
-
-    mark.addEventListener('click', () => focusAnnotation(ann.id))
-    break // 每条标注只高亮第一个匹配
+      const mark = document.createElement('mark')
+      mark.className = 'annotation-highlight'
+      mark.dataset.annotationId = ann.id
+      mark.title = `${ann.author}：${ann.comment}`
+      range.surroundContents(mark)
+      mark.addEventListener('click', () => focusAnnotation(ann.id))
+    } catch {
+      // surroundContents 在跨节点 range 时会抛错，忽略并继续找下一个节点
+      continue
+    }
+    break
   }
 }
 
@@ -142,12 +157,14 @@ function focusAnnotation(id: string) {
   annotationList.querySelectorAll('.annotation-item').forEach(el => {
     el.classList.toggle('active', (el as HTMLElement).dataset.id === id)
   })
-  // 滚动到文档高亮位置
+  // 激活文档高亮（持续显示，切换时清除上一个）
+  docContainer.querySelectorAll('mark.annotation-highlight').forEach(mark => {
+    mark.classList.toggle('active', (mark as HTMLElement).dataset.annotationId === id)
+  })
+  // 滚动到高亮位置
   const mark = docContainer.querySelector(`mark[data-annotation-id="${id}"]`)
   if (mark) {
-    mark.classList.add('active')
     mark.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    setTimeout(() => mark.classList.remove('active'), 1500)
   }
 }
 
