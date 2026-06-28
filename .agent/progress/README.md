@@ -16,15 +16,22 @@
 |------|------|---------------------|------|
 | 技术方案规划（plan.md） | ✅ 已完成 | 初始 Session | 含平台选型、接口设计、版本隔离逻辑 |
 | 技术设计文档（TECHNICAL_DESIGN.md） | ✅ 已完成 | 初始 Session | 含技术栈、模块划分、接口设计、调用关系 |
-| 仓库基础结构 | 🟡 进行中 | 初始 Session | .gitignore、AGENTS.md、.agent/ 目录已创建 |
-| GitHub Actions 配置 | ⬜ 待开始 | — | Tag 推送 → GitHub Pages 自动部署 |
-| 示例 PRD HTML 文档 | ⬜ 待开始 | — | 用于 Demo 的示例文档 |
-| 前端文字选中捕获 | ⬜ 待开始 | — | Selection API，弹出评论输入框 |
-| 标注高亮渲染层 | ⬜ 待开始 | — | 读取 Issues，在原文高亮并显示侧边面板 |
-| AnnotationProvider 接口定义 | ⬜ 待开始 | — | TypeScript Interface |
-| GitHubIssueProvider 实现 | ⬜ 待开始 | — | PAT Token，调用 GitHub REST API |
+| 仓库基础结构 | ✅ 已完成 | 初始 Session | .gitignore、AGENTS.md、.agent/、package.json、tsconfig.json、vite.config.ts |
+| .env.example 文件 | ✅ 已完成 | 初始 Session | 环境变量模板已创建 |
+| 示例 PRD HTML 文档 | ✅ 已完成 | 初始 Session | docs/sample-prd.html，含标准 PRD 结构 |
+| M1 · core/types.ts | ✅ 已完成 | 初始 Session | Anchor、Annotation、Reply、AnnotationMeta 类型定义 |
+| M2 · core/AnnotationProvider.ts | ✅ 已完成 | 初始 Session | 可替换后端接口契约 |
+| M3 · providers/LocalFileProvider.ts | ✅ 已完成 | 初始 Session | Demo 实现：fetch 静态 JSON + git 命令行写入 |
+| M4 · ui/SelectionCapture.ts | ⬜ 待开始 | — | Selection API，弹出评论输入框 |
+| M5 · ui/Highlighter.ts | ⬜ 待开始 | — | 在原文渲染高亮标记 |
+| M6 · ui/CommentDialog.ts | ⬜ 待开始 | — | 评论输入弹窗 |
+| M7 · ui/AnnotationPanel.ts | ⬜ 待开始 | — | 侧边评论面板，双向联动高亮 |
+| M8 · src/config.ts | ⬜ 待开始 | — | 注入 LocalFileProvider，可一行切换实现 |
+| M9 · viewer/viewer.ts + index.html | ⬜ 待开始 | — | 入口，组装所有模块 |
+| M10 · .github/workflows/deploy.yml | ⬜ 待开始 | — | Tag 推送 → 多版本 GitHub Pages 自动部署 |
 | 版本隔离验证 | ⬜ 待开始 | — | v1.0 和 v1.1 标注互不影响 |
-| .env.example 文件 | ⬜ 待开始 | — | 环境变量模板 |
+
+> **注**：`GitHubIssueProvider` 已从设计中移除，Demo 阶段统一使用 `LocalFileProvider`（git 命令行写入）。
 
 ---
 
@@ -45,3 +52,4 @@
 |------|---------|
 | 2026-06-28 | 初始化仓库结构，完成技术方案规划，M1 里程碑达成 |
 | 2026-06-28 | 完成详细技术设计文档（TECHNICAL_DESIGN.md）：技术栈、10个模块划分、调用关系、关键设计决策 |
+| 2026-06-28 | 完成 M1~M3（types、AnnotationProvider 接口、LocalFileProvider）；新增示例 PRD、.env.example、项目基础配置 |
