@@ -1,4 +1,5 @@
 import { provider, currentVersion } from '../config'
+import { REDIRECT_PREFIX } from '../providers/GitHubIssueUrlProvider'
 import type { Anchor, Annotation } from '../core/types'
 
 // ── 常量 ──────────────────────────────────────────────────────────────────────
@@ -245,13 +246,22 @@ async function submitComment() {
   if (!comment) { commentInput.focus(); return }
 
   submitBtn.disabled = true
-  submitBtn.textContent = '提交中...'
+  submitBtn.textContent = '跳转中...'
   localStorage.setItem('annotation-author', author)
 
   try {
-    await provider.createAnnotation(pendingAnchor, comment, { author })
+    const result = await provider.createAnnotation(pendingAnchor, comment, { author })
     closeDialog()
-    await refreshAnnotations()
+
+    if (result.startsWith(REDIRECT_PREFIX)) {
+      // 方式 A：跳转到 GitHub Issue 创建页
+      const issueUrl = result.slice(REDIRECT_PREFIX.length)
+      window.open(issueUrl, '_blank')
+      showNotice('已在新标签页打开 GitHub Issue 创建页面，提交后刷新页面可看到评论 💬')
+    } else {
+      // 其他 Provider（写入成功，直接刷新）
+      await refreshAnnotations()
+    }
   } catch (e) {
     alert(`提交失败：${e}`)
   } finally {
@@ -267,6 +277,20 @@ function escapeHtml(str: string): string {
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+
+/** 在顶部显示一条自动消失的提示横幅 */
+function showNotice(msg: string, durationMs = 6000) {
+  const el = document.createElement('div')
+  el.style.cssText = [
+    'position:fixed', 'top:56px', 'left:50%', 'transform:translateX(-50%)',
+    'background:#1e1e3f', 'color:#fff', 'font-size:13px', 'padding:10px 20px',
+    'border-radius:8px', 'box-shadow:0 4px 16px rgba(0,0,0,.2)',
+    'z-index:99999', 'max-width:480px', 'text-align:center', 'line-height:1.6',
+  ].join(';')
+  el.textContent = msg
+  document.body.appendChild(el)
+  setTimeout(() => el.remove(), durationMs)
 }
 
 // ── 启动 ─────────────────────────────────────────────────────────────────────
