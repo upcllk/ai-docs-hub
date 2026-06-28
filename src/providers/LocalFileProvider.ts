@@ -35,6 +35,12 @@ export class LocalFileProvider implements AnnotationProvider {
     const res = await fetch(url)
     if (res.status === 404) return []
     if (!res.ok) throw new Error(`Failed to fetch annotations: ${res.status} ${url}`)
+    // Vite dev server SPA fallback 会对不存在的文件返回 index.html（status 200）
+    // 通过 Content-Type 检测来避免把 HTML 误当 JSON 解析
+    const contentType = res.headers.get('content-type') ?? ''
+    if (!contentType.includes('application/json') && !contentType.includes('text/plain')) {
+      return []
+    }
     return res.json() as Promise<Annotation[]>
   }
 

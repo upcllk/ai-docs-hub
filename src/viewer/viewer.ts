@@ -30,11 +30,11 @@ async function init() {
   // 1. 加载 PRD HTML
   await loadDoc()
 
-  // 2. 加载已有标注并渲染
-  await refreshAnnotations()
-
-  // 3. 初始化文字选中监听
+  // 3. 先初始化文字选中监听（不依赖标注数据，不阻塞）
   initSelectionCapture()
+
+  // 2. 加载已有标注并渲染（失败时降级为空，不影响选中功能）
+  await refreshAnnotations()
 }
 
 // ── 加载文档 ──────────────────────────────────────────────────────────────────
@@ -167,23 +167,24 @@ function initSelectionCapture() {
 }
 
 function onMouseUp(e: Event) {
-  // 点击在弹窗内时不处理
   if ((e.target as Element).closest('#comment-dialog')) return
 
   setTimeout(() => {
     const sel = window.getSelection()
+    console.log('[debug] mouseup, sel:', sel?.toString(), 'isCollapsed:', sel?.isCollapsed)
     if (!sel || sel.isCollapsed || sel.toString().trim() === '') {
       hideTooltip()
       return
     }
-    // 只处理文档区域内的选中
     const range = sel.getRangeAt(0)
-    if (!docContainer.contains(range.commonAncestorContainer)) {
+    const inDoc = docContainer.contains(range.commonAncestorContainer)
+    console.log('[debug] inDocContainer:', inDoc, range.commonAncestorContainer)
+    if (!inDoc) {
       hideTooltip()
       return
     }
-
     const rect = range.getBoundingClientRect()
+    console.log('[debug] rect:', rect, 'showing tooltip at top:', rect.top - 40)
     showTooltip(rect)
     pendingAnchor = buildAnchor(sel, range)
   }, 10)
