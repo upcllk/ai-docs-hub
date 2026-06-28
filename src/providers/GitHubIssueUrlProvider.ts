@@ -44,11 +44,10 @@ export class GitHubIssueUrlProvider implements AnnotationProvider {
       comment,
     ].join('\n')
 
-    const labels = ['annotation', anchor.version].join(',')
     const url = new URL(`https://github.com/${this.owner}/${this.repo}/issues/new`)
     url.searchParams.set('title', title)
     url.searchParams.set('body', body)
-    url.searchParams.set('labels', labels)
+    // labels 仅作为可选提示，不存在的标签会被 GitHub 忽略
 
     // 返回特殊前缀，viewer.ts 识别后打开该 URL
     return `${REDIRECT_PREFIX}${url.toString()}`
@@ -59,7 +58,6 @@ export class GitHubIssueUrlProvider implements AnnotationProvider {
   async listAnnotations(docId: string, version: string): Promise<Annotation[]> {
     const url = `${this.apiBase}/repos/${this.owner}/${this.repo}/issues`
     const params = new URLSearchParams({
-      labels: `annotation,${version}`,
       state: 'open',
       per_page: '100',
     })
@@ -73,10 +71,12 @@ export class GitHubIssueUrlProvider implements AnnotationProvider {
     }
 
     const issues = await res.json() as GitHubIssue[]
+    const titlePrefix = `[annotation] ${docId}@${version}`
+
     return issues
+      .filter(i => i.title.startsWith(titlePrefix))
       .map(issueToAnnotation)
       .filter((a): a is Annotation => a !== null)
-      .filter(a => a.anchor.docId === docId)
   }
 
   async replyToAnnotation(_annotationId: string, _reply: string, _meta: AnnotationMeta): Promise<void> {
