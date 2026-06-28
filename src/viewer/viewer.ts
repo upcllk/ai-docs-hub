@@ -82,7 +82,12 @@ function renderHighlights() {
 }
 
 function highlightAnchor(ann: Annotation) {
-  const { selectedText, contextBefore, contextAfter } = ann.anchor
+  const { selectedText, contextBefore } = ann.anchor
+
+  // 取 selectedText 的第一个非空行用于 DOM 定位
+  // 原因：多行选中时 selectedText 跨多个文本节点，整体无法在单节点内找到
+  const firstLine = selectedText.split('\n').map(s => s.trim()).find(s => s.length > 0) ?? selectedText.trim()
+  if (!firstLine) return
 
   const walker = document.createTreeWalker(docContainer, NodeFilter.SHOW_TEXT)
   let node: Text | null
@@ -90,21 +95,19 @@ function highlightAnchor(ann: Annotation) {
   while ((node = walker.nextNode() as Text | null)) {
     const text = node.nodeValue ?? ''
 
-    // 优先：用上下文三元组精确定位（同一文本节点内）
-    const fullStr = contextBefore + selectedText + contextAfter
+    // 优先：用 contextBefore + firstLine 精确定位（同节点内）
     let startOffset = -1
-
-    const fullIdx = text.indexOf(fullStr)
-    if (fullIdx !== -1) {
-      startOffset = fullIdx + contextBefore.length
+    const withContext = contextBefore + firstLine
+    const ctxIdx = text.indexOf(withContext)
+    if (ctxIdx !== -1) {
+      startOffset = ctxIdx + contextBefore.length
     } else {
-      // 降级：仅用 selectedText 匹配（跨节点时 context 找不到）
-      startOffset = text.indexOf(selectedText)
+      startOffset = text.indexOf(firstLine)
     }
 
     if (startOffset === -1) continue
 
-    const endOffset = startOffset + selectedText.length
+    const endOffset = startOffset + firstLine.length
     if (endOffset > text.length) continue
 
     try {
@@ -119,7 +122,6 @@ function highlightAnchor(ann: Annotation) {
       range.surroundContents(mark)
       mark.addEventListener('click', () => focusAnnotation(ann.id))
     } catch {
-      // surroundContents 在跨节点 range 时会抛错，忽略并继续找下一个节点
       continue
     }
     break
