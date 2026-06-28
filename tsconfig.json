@@ -8,8 +8,7 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "skipLibCheck": true,
-    "outDir": "dist",
-    "rootDir": "src"
+    "types": ["vite/client"]
   },
   "include": ["src"]
 }

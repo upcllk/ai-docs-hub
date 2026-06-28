@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Docs Hub</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
+      background: #f0f2f8;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── 顶部栏 ── */
+    #topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 52px;
+      background: #1e1e3f;
+      color: #fff;
+      flex-shrink: 0;
+      font-size: 14px;
+      gap: 16px;
+    }
+    #topbar .logo { font-weight: 700; font-size: 15px; letter-spacing: .02em; }
+    #topbar .doc-info { color: #a5b4fc; font-size: 13px; }
+    #version-badge {
+      background: #4f46e5;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+
+    /* ── 主区域：文档 + 侧边栏 ── */
+    #main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── 文档区 ── */
+    #doc-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0;
+    }
+    /* 注入的 PRD 文档会有自己的样式，这里仅做容器 */
+    #doc-container .doc-wrapper {
+      margin: 32px auto;
+    }
+
+    /* ── 侧边评论面板 ── */
+    #annotation-panel {
+      width: 320px;
+      flex-shrink: 0;
+      background: #fff;
+      border-left: 1px solid #e5e7eb;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #annotation-panel .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 14px;
+      font-weight: 600;
+      color: #1e1e3f;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    #annotation-panel .panel-header .count {
+      background: #eef2ff;
+      color: #4f46e5;
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 12px;
+    }
+    #annotation-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+    }
+    .annotation-item {
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .annotation-item:hover {
+      border-color: #a5b4fc;
+      box-shadow: 0 2px 8px rgba(79,70,229,.08);
+    }
+    .annotation-item.active {
+      border-color: #4f46e5;
+      background: #fafafe;
+    }
+    .annotation-quote {
+      font-size: 12px;
+      color: #6b7280;
+      background: #f9fafb;
+      border-left: 3px solid #d1d5db;
+      padding: 4px 8px;
+      border-radius: 0 4px 4px 0;
+      margin-bottom: 8px;
+      line-height: 1.5;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .annotation-comment { font-size: 13px; color: #374151; line-height: 1.6; }
+    .annotation-meta { font-size: 12px; color: #9ca3af; margin-top: 6px; }
+
+    .panel-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #9ca3af;
+      font-size: 13px;
+      gap: 8px;
+      padding: 24px;
+      text-align: center;
+    }
+    .panel-empty .icon { font-size: 32px; }
+
+    /* ── 选中文字后的浮动按钮 ── */
+    #selection-tooltip {
+      position: fixed;
+      display: none;
+      z-index: 9999;
+      background: #1e1e3f;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,.25);
+      user-select: none;
+      transition: opacity .1s;
+    }
+    #selection-tooltip:hover { background: #4f46e5; }
+
+    /* ── 评论输入弹窗 ── */
+    #comment-dialog {
+      display: none;
+      position: fixed;
+      z-index: 10000;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      width: 300px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.12);
+    }
+    #comment-dialog .dialog-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 10px;
+    }
+    #comment-dialog .selected-preview {
+      font-size: 12px;
+      color: #6b7280;
+      background: #f9fafb;
+      border-left: 3px solid #4f46e5;
+      padding: 4px 8px;
+      border-radius: 0 4px 4px 0;
+      margin-bottom: 10px;
+      max-height: 48px;
+      overflow: hidden;
+      line-height: 1.5;
+    }
+    #comment-input {
+      width: 100%;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 13px;
+      resize: vertical;
+      min-height: 72px;
+      font-family: inherit;
+      outline: none;
+    }
+    #comment-input:focus { border-color: #4f46e5; }
+    .dialog-author-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .dialog-author-row label { font-size: 12px; color: #6b7280; flex-shrink: 0; }
+    #comment-author {
+      flex: 1;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 5px 8px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+    }
+    #comment-author:focus { border-color: #4f46e5; }
+    .dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .btn {
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+    }
+    .btn-cancel { background: #f3f4f6; color: #374151; }
+    .btn-cancel:hover { background: #e5e7eb; }
+    .btn-submit { background: #4f46e5; color: #fff; }
+    .btn-submit:hover { background: #4338ca; }
+    .btn-submit:disabled { background: #a5b4fc; cursor: not-allowed; }
+
+    /* ── 高亮样式 ── */
+    mark.annotation-highlight {
+      background: #fef9c3;
+      border-bottom: 2px solid #f59e0b;
+      border-radius: 2px;
+      cursor: pointer;
+      padding: 0 1px;
+    }
+    mark.annotation-highlight:hover,
+    mark.annotation-highlight.active {
+      background: #fde68a;
+    }
+
+    /* ── 加载状态 ── */
+    #doc-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #9ca3af;
+      font-size: 14px;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div id="topbar">
+    <span class="logo">📄 AI Docs Hub</span>
+    <span class="doc-info" id="doc-title">加载中...</span>
+    <span id="version-badge">—</span>
+  </div>
+
+  <div id="main">
+    <div id="doc-container">
+      <div id="doc-loading">⏳ 正在加载文档...</div>
+    </div>
+    <aside id="annotation-panel">
+      <div class="panel-header">
+        <span>💬 评论</span>
+        <span class="count" id="annotation-count">0</span>
+      </div>
+      <div id="annotation-list">
+        <div class="panel-empty">
+          <span class="icon">🖊️</span>
+          <span>选中文档中的文字<br>即可添加评论</span>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- 选中文字后的浮动按钮 -->
+  <div id="selection-tooltip">💬 添加评论</div>
+
+  <!-- 评论输入弹窗 -->
+  <div id="comment-dialog">
+    <div class="dialog-title">添加评论</div>
+    <div class="selected-preview" id="dialog-preview"></div>
+    <textarea id="comment-input" placeholder="输入评论内容..."></textarea>
+    <div class="dialog-author-row">
+      <label>署名</label>
+      <input type="text" id="comment-author" placeholder="你的名字" />
+    </div>
+    <div class="dialog-actions">
+      <button class="btn btn-cancel" id="dialog-cancel">取消</button>
+      <button class="btn btn-submit" id="dialog-submit">提交</button>
+    </div>
+  </div>
+
+  <script type="module" src="./viewer.ts"></script>
+</body>
+</html>
