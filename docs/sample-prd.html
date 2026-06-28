@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PRD · AI 文档协作平台 v1.0</title>
+  <style>
+    /* ── 基础重置 ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", sans-serif;
+      font-size: 15px;
+      line-height: 1.8;
+      color: #1a1a2e;
+      background: #f7f8fc;
+    }
+
+    /* ── 文档容器 ── */
+    .doc-wrapper {
+      max-width: 860px;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 20px rgba(0,0,0,.08);
+      padding: 56px 64px;
+    }
+
+    /* ── 标题区 ── */
+    .doc-header {
+      border-bottom: 2px solid #e8eaf0;
+      padding-bottom: 32px;
+      margin-bottom: 40px;
+    }
+    .doc-header .badge {
+      display: inline-block;
+      background: #eef2ff;
+      color: #4f46e5;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+    }
+    .doc-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #0f0f23;
+      line-height: 1.3;
+    }
+    .doc-meta {
+      display: flex;
+      gap: 24px;
+      margin-top: 16px;
+      font-size: 13px;
+      color: #6b7280;
+    }
+    .doc-meta span strong { color: #374151; }
+
+    /* ── 章节标题 ── */
+    h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #0f0f23;
+      margin: 40px 0 16px;
+      padding-left: 14px;
+      border-left: 4px solid #4f46e5;
+    }
+    h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #374151;
+      margin: 24px 0 10px;
+    }
+
+    /* ── 正文 ── */
+    p { margin-bottom: 14px; color: #374151; }
+
+    /* ── 列表 ── */
+    ul, ol { padding-left: 22px; margin-bottom: 14px; }
+    li { margin-bottom: 6px; color: #374151; }
+
+    /* ── 表格 ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 14px;
+    }
+    th {
+      background: #f3f4f6;
+      text-align: left;
+      padding: 10px 14px;
+      font-weight: 600;
+      color: #374151;
+      border: 1px solid #e5e7eb;
+    }
+    td {
+      padding: 9px 14px;
+      border: 1px solid #e5e7eb;
+      color: #4b5563;
+    }
+    tr:nth-child(even) td { background: #fafafa; }
+
+    /* ── 状态标签 ── */
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .tag-p0 { background: #fef2f2; color: #dc2626; }
+    .tag-p1 { background: #fff7ed; color: #d97706; }
+    .tag-p2 { background: #f0fdf4; color: #16a34a; }
+    .tag-tbd { background: #f3f4f6; color: #6b7280; }
+
+    /* ── 提示框 ── */
+    .callout {
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin: 20px 0;
+      font-size: 14px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .callout-warn { background: #fffbeb; border-left: 4px solid #f59e0b; }
+    .callout-info { background: #eff6ff; border-left: 4px solid #3b82f6; }
+    .callout-icon { font-size: 16px; line-height: 1.6; flex-shrink: 0; }
+
+    /* ── 分割线 ── */
+    hr { border: none; border-top: 1px solid #e8eaf0; margin: 36px 0; }
+
+    /* ── 页脚 ── */
+    .doc-footer {
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid #e8eaf0;
+      font-size: 13px;
+      color: #9ca3af;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+<div class="doc-wrapper">
+
+  <!-- ── 文档头部 ── -->
+  <header class="doc-header">
+    <div class="badge">PRD · v1.0</div>
+    <h1>AI 文档协作平台</h1>
+    <div class="doc-meta">
+      <span><strong>作者：</strong>产品团队</span>
+      <span><strong>创建：</strong>2026-06-28</span>
+      <span><strong>状态：</strong>评审中</span>
+      <span><strong>文档 ID：</strong>sample-prd</span>
+    </div>
+  </header>
+
+  <!-- ── 一、背景与目标 ── -->
+  <h2>一、背景与目标</h2>
+
+  <p>随着 AI 工具的普及，团队越来越多地使用 AI 直接生成产品需求文档（PRD）和技术文档。这些文档通常以静态 HTML 或 Markdown 格式输出并保存在本地，导致以下问题：</p>
+
+  <ul>
+    <li>文档散落在各人电脑，无法统一访问</li>
+    <li>版本更新后难以追踪变化，接收方需要重新分发</li>
+    <li>缺乏类似飞书的行内评论机制，反馈流程割裂</li>
+  </ul>
+
+  <p>本项目旨在构建一套轻量级的文档托管与协作系统，将 AI 生成的文档发布到 GitHub Pages，并实现基于文字选中的行内标注功能。</p>
+
+  <div class="callout callout-info">
+    <span class="callout-icon">ℹ️</span>
+    <div>本期目标为完成 MVP Demo，核心验证"版本管理 + 行内标注"两个核心链路，不涉及用户权限管理和私有仓库访问控制。</div>
+  </div>
+
+  <hr />
+
+  <!-- ── 二、用户与场景 ── -->
+  <h2>二、用户与使用场景</h2>
+
+  <table>
+    <thead>
+      <tr><th>角色</th><th>主要诉求</th><th>典型场景</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>产品经理</td>
+        <td>发布和管理 PRD 版本，收集技术团队反馈</td>
+        <td>将 AI 生成的 PRD 推送到仓库并打 Tag 发布</td>
+      </tr>
+      <tr>
+        <td>研发工程师</td>
+        <td>查阅 PRD，针对具体文字提出疑问或确认</td>
+        <td>选中某段需求描述，添加"这里的边界条件需要明确"</td>
+      </tr>
+      <tr>
+        <td>测试工程师</td>
+        <td>核对验收标准，标注测试关注点</td>
+        <td>选中验收标准章节，标注"需要补充异常路径测试用例"</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <hr />
+
+  <!-- ── 三、功能需求 ── -->
+  <h2>三、功能需求</h2>
+
+  <h3>3.1 文档发布与版本管理</h3>
+
+  <p>产品经理将 AI 生成的 HTML 文档放入仓库的 <code>docs/</code> 目录，通过 Git Tag 标记版本后推送，GitHub Actions 自动完成构建与部署。</p>
+
+  <ul>
+    <li>每个 Tag（如 <code>v1.0</code>）对应一个独立的在线访问地址</li>
+    <li>最新版本同时部署到根路径，供快速访问</li>
+    <li>旧版本永久保留，不受新版本发布影响</li>
+  </ul>
+
+  <div class="callout callout-warn">
+    <span class="callout-icon">⚠️</span>
+    <div><strong>待确认：</strong>多文档场景下，文档之间是否需要索引页？当前设计每个文档独立，通过 URL 直接访问。</div>
+  </div>
+
+  <h3>3.2 行内文字标注</h3>
+
+  <p>在发布后的文档页面上，评审人可以选中任意文字片段并添加评论。标注以高亮形式展示在原文中，评论内容显示在右侧面板。</p>
+
+  <table>
+    <thead>
+      <tr><th>功能点</th><th>优先级</th><th>说明</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>选中文字弹出评论入口</td><td><span class="tag tag-p0">P0</span></td><td>选中后显示浮动「添加评论」按钮</td></tr>
+      <tr><td>评论输入与提交</td><td><span class="tag tag-p0">P0</span></td><td>弹窗输入，提交后写入本地 JSON 并提示 git 操作</td></tr>
+      <tr><td>高亮渲染</td><td><span class="tag tag-p0">P0</span></td><td>页面加载时自动在原文标注已有评论的位置</td></tr>
+      <tr><td>侧边评论面板</td><td><span class="tag tag-p0">P0</span></td><td>展示所有标注，点击可定位到对应高亮</td></tr>
+      <tr><td>回复功能</td><td><span class="tag tag-p1">P1</span></td><td>对某条评论追加回复，Demo 阶段支持直接编辑 JSON</td></tr>
+      <tr><td>删除标注</td><td><span class="tag tag-p2">P2</span></td><td>作者可删除自己的标注</td></tr>
+    </tbody>
+  </table>
+
+  <h3>3.3 版本间标注隔离</h3>
+
+  <p>不同版本的文档拥有独立的标注集合，互不干扰。<code>v1.0</code> 的评论不会出现在 <code>v1.1</code> 的页面上，实现"版本快照 + 评论快照"的完整存档。</p>
+
+  <hr />
+
+  <!-- ── 四、非功能需求 ── -->
+  <h2>四、非功能需求</h2>
+
+  <ul>
+    <li><strong>无后端：</strong>全部基于静态文件托管，零服务器运维成本</li>
+    <li><strong>无强制鉴权：</strong>Demo 阶段读取完全公开，写入由本地 git 操作保证</li>
+    <li><strong>可替换性：</strong>标注后端通过 AnnotationProvider 接口抽象，后期可切换至 GitHub Issues 或自建服务</li>
+    <li><strong>兼容性：</strong>支持 Chrome 90+、Firefox 90+、Safari 14+</li>
+  </ul>
+
+  <hr />
+
+  <!-- ── 五、验收标准 ── -->
+  <h2>五、验收标准</h2>
+
+  <ol>
+    <li>执行 <code>git tag v1.0 && git push origin v1.0</code> 后，5 分钟内文档在 GitHub Pages 可访问</li>
+    <li>在文档页面选中文字，能弹出评论输入框，提交后页面出现对应高亮</li>
+    <li>刷新页面后，历史标注的高亮和侧边面板评论均正常展示</li>
+    <li><code>v1.0</code> 的标注不出现在 <code>v1.1</code> 的页面上</li>
+  </ol>
+
+  <hr />
+
+  <!-- ── 六、开放问题 ── -->
+  <h2>六、开放问题</h2>
+
+  <table>
+    <thead>
+      <tr><th>#</th><th>问题</th><th>状态</th><th>负责人</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>文档内容更新后，旧版本的锚点是否仍能正确定位到对应文字？</td>
+        <td><span class="tag tag-tbd">待讨论</span></td>
+        <td>研发</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>多人同时添加标注时，JSON 文件是否会产生 git 冲突？</td>
+        <td><span class="tag tag-tbd">待讨论</span></td>
+        <td>研发</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>是否需要支持 Markdown 格式的文档，还是仅限 HTML？</td>
+        <td><span class="tag tag-tbd">待确认</span></td>
+        <td>产品</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── 页脚 ── -->
+  <footer class="doc-footer">
+    AI Docs Hub · sample-prd · v1.0 · 2026-06-28
+  </footer>
+
+</div>
+</body>
+</html>
