@@ -11,7 +11,7 @@
 1. 文档在线化与版本管理（Git Tags + GitHub Pages）
 2. 文字选中行内评论（前端 Selection API + GitHub Issues 作为后端存储）
 
-> 详细技术方案见 [`plan.md`](./plan.md)
+> 宏观方案见 [`plan.md`](./plan.md)，模块级技术设计见 [`TECHNICAL_DESIGN.md`](./TECHNICAL_DESIGN.md)
 
 ---
 
@@ -21,6 +21,7 @@
 ai-docs-hub/
 ├── AGENTS.md              ← 当前文件，Agent 操作指南
 ├── plan.md                ← 高层技术方案（架构、接口设计）
+├── TECHNICAL_DESIGN.md    ← 详细技术设计（模块划分、文件职责、接口定义）
 ├── .gitignore
 ├── .agent/
 │   ├── pitfalls/          ← 实现中遇到的坑和问题
@@ -38,7 +39,7 @@ ai-docs-hub/
 ## Agent 行为规范
 
 ### 每次任务开始前
-1. 阅读 `plan.md` 了解整体架构
+1. 阅读 `plan.md` 了解整体架构，阅读 `TECHNICAL_DESIGN.md` 了解模块划分与接口约定
 2. 阅读 `.agent/progress/README.md` 了解当前实现进度
 3. 阅读 `.agent/pitfalls/README.md` 避免踩已知的坑
 
